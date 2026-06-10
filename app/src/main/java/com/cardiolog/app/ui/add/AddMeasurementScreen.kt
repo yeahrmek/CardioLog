@@ -16,7 +16,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -39,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.cardiolog.app.domain.MeasurementPeriod
 import com.cardiolog.app.ui.components.formatDate
 import com.cardiolog.app.ui.components.formatTime
 import com.cardiolog.app.ui.components.toLocalDateTime
@@ -87,7 +85,7 @@ fun AddMeasurementScreen(
                 OutlinedTextField(
                     value = state.systolic,
                     onValueChange = viewModel::updateSystolic,
-                    label = { Text("Систолическое") },
+                    label = { Text("Сист.") },
                     suffix = { Text("mmHg") },
                     isError = state.systolicError != null,
                     supportingText = { state.systolicError?.let { Text(it) } },
@@ -97,7 +95,7 @@ fun AddMeasurementScreen(
                 OutlinedTextField(
                     value = state.diastolic,
                     onValueChange = viewModel::updateDiastolic,
-                    label = { Text("Диастолическое") },
+                    label = { Text("Диаст.") },
                     suffix = { Text("mmHg") },
                     isError = state.diastolicError != null,
                     supportingText = { state.diastolicError?.let { Text(it) } },
@@ -115,15 +113,11 @@ fun AddMeasurementScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MeasurementPeriod.entries.forEach { period ->
-                    FilterChip(
-                        selected = state.period == period,
-                        onClick = { viewModel.updatePeriod(period) },
-                        label = { Text(period.title) },
-                    )
-                }
-            }
+            Text(
+                text = "Период: ${state.period.title} (определяется по времени)",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Default.CalendarMonth, contentDescription = null)

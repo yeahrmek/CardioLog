@@ -4,6 +4,9 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.cardiolog.app.domain.BloodPressureMeasurement
 import com.cardiolog.app.domain.MeasurementPeriod
+import com.cardiolog.app.domain.toMeasurementPeriod
+import java.time.Instant
+import java.time.ZoneId
 
 @Entity(tableName = "blood_pressure_measurements")
 data class BloodPressureMeasurementEntity(
@@ -25,7 +28,7 @@ fun BloodPressureMeasurementEntity.toDomain() = BloodPressureMeasurement(
     diastolic = diastolic,
     pulse = pulse,
     measuredAtMillis = measuredAtMillis,
-    period = period,
+    period = measuredAtMillis.toMeasurementPeriod(),
     note = note,
     createdAtMillis = createdAtMillis,
     updatedAtMillis = updatedAtMillis,
@@ -42,3 +45,6 @@ fun BloodPressureMeasurement.toEntity() = BloodPressureMeasurementEntity(
     createdAtMillis = createdAtMillis,
     updatedAtMillis = updatedAtMillis,
 )
+
+private fun Long.toMeasurementPeriod(): MeasurementPeriod =
+    Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDateTime().toMeasurementPeriod()
