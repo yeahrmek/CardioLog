@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -38,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cardiolog.app.domain.MeasurementPeriod
 import com.cardiolog.app.ui.components.formatDate
 import com.cardiolog.app.ui.components.formatTime
 import com.cardiolog.app.ui.components.toLocalDateTime
@@ -73,11 +75,11 @@ fun AddMeasurementScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = if (state.isEditMode) "Edit measurement" else "Add measurement",
+                text = if (state.isEditMode) "Редактировать измерение" else "Добавить измерение",
                 style = MaterialTheme.typography.headlineMedium,
             )
             Text(
-                text = "Record blood pressure with the correct measurement date and time.",
+                text = "Запишите давление с правильной датой и временем измерения.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -85,7 +87,7 @@ fun AddMeasurementScreen(
                 OutlinedTextField(
                     value = state.systolic,
                     onValueChange = viewModel::updateSystolic,
-                    label = { Text("Systolic") },
+                    label = { Text("Систолическое") },
                     suffix = { Text("mmHg") },
                     isError = state.systolicError != null,
                     supportingText = { state.systolicError?.let { Text(it) } },
@@ -95,7 +97,7 @@ fun AddMeasurementScreen(
                 OutlinedTextField(
                     value = state.diastolic,
                     onValueChange = viewModel::updateDiastolic,
-                    label = { Text("Diastolic") },
+                    label = { Text("Диастолическое") },
                     suffix = { Text("mmHg") },
                     isError = state.diastolicError != null,
                     supportingText = { state.diastolicError?.let { Text(it) } },
@@ -106,13 +108,22 @@ fun AddMeasurementScreen(
             OutlinedTextField(
                 value = state.pulse,
                 onValueChange = viewModel::updatePulse,
-                label = { Text("Pulse (optional)") },
+                label = { Text("Пульс (необязательно)") },
                 suffix = { Text("bpm") },
                 isError = state.pulseError != null,
-                supportingText = { state.pulseError?.let { Text(it) } ?: Text("Recommended when available") },
+                supportingText = { state.pulseError?.let { Text(it) } ?: Text("Рекомендуется, если вы знаете пульс") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
             )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MeasurementPeriod.entries.forEach { period ->
+                    FilterChip(
+                        selected = state.period == period,
+                        onClick = { viewModel.updatePeriod(period) },
+                        label = { Text(period.title) },
+                    )
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Default.CalendarMonth, contentDescription = null)
@@ -126,12 +137,12 @@ fun AddMeasurementScreen(
             OutlinedTextField(
                 value = state.note,
                 onValueChange = viewModel::updateNote,
-                label = { Text("Note (optional)") },
+                label = { Text("Заметка (необязательно)") },
                 minLines = 3,
                 modifier = Modifier.fillMaxWidth(),
             )
             Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
-                Text(if (state.isEditMode) "Save changes" else "Save measurement")
+                Text(if (state.isEditMode) "Сохранить изменения" else "Сохранить измерение")
             }
         }
     }
@@ -147,9 +158,9 @@ fun AddMeasurementScreen(
                         viewModel.updateMeasuredAt(LocalDateTime.of(selectedDate, measuredAt.toLocalTime()).toMillis())
                     }
                     showDatePicker = false
-                }) { Text("OK") }
+                }) { Text("ОК") }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Отмена") } },
         ) { DatePicker(state = datePickerState) }
     }
 
@@ -157,7 +168,7 @@ fun AddMeasurementScreen(
         val timePickerState = rememberTimePickerState(
             initialHour = measuredAt.hour,
             initialMinute = measuredAt.minute,
-            is24Hour = false,
+            is24Hour = true,
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
@@ -166,10 +177,10 @@ fun AddMeasurementScreen(
                     val newTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
                     viewModel.updateMeasuredAt(LocalDateTime.of(measuredAt.toLocalDate(), newTime).toMillis())
                     showTimePicker = false
-                }) { Text("OK") }
+                }) { Text("ОК") }
             },
-            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancel") } },
-            title = { Text("Measurement time") },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Отмена") } },
+            title = { Text("Время измерения") },
             text = { TimeInput(state = timePickerState) },
         )
     }

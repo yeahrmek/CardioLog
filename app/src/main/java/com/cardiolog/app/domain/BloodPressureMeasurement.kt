@@ -6,6 +6,7 @@ data class BloodPressureMeasurement(
     val diastolic: Int,
     val pulse: Int?,
     val measuredAtMillis: Long,
+    val period: MeasurementPeriod,
     val note: String?,
     val createdAtMillis: Long,
     val updatedAtMillis: Long,

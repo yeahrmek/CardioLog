@@ -1,3 +1,3 @@
 package com.cardiolog.app.domain
 
-enum class ChartRange { Daily, Monthly }
+enum class ChartRange { Daily, Weekly, Monthly }

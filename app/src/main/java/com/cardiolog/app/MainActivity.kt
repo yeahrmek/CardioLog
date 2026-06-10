@@ -4,10 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Insights
-import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -27,6 +28,7 @@ import androidx.navigation.navArgument
 import com.cardiolog.app.ui.add.AddMeasurementScreen
 import com.cardiolog.app.ui.charts.ChartsScreen
 import com.cardiolog.app.ui.list.MeasurementListScreen
+import com.cardiolog.app.ui.profile.ProfileScreen
 import com.cardiolog.app.ui.theme.CardioLogTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,17 +39,18 @@ class MainActivity : ComponentActivity() {
 }
 
 private sealed class Destination(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    data object Add : Destination("add?measurementId={measurementId}", "Add", Icons.Default.AddCircle) {
+    data object Add : Destination("add?measurementId={measurementId}", "Добавить", Icons.Default.AddCircle) {
         fun createRoute(measurementId: Long = -1L) = "add?measurementId=$measurementId"
     }
-    data object Charts : Destination("charts", "Charts", Icons.Default.Insights)
-    data object List : Destination("list", "List", Icons.Default.ListAlt)
+    data object Charts : Destination("charts", "Графики", Icons.Default.Insights)
+    data object List : Destination("list", "Список", Icons.AutoMirrored.Filled.ListAlt)
+    data object Profile : Destination("profile", "Профиль", Icons.Default.Person)
 }
 
 @Composable
 fun CardioLogApp() {
     val navController = rememberNavController()
-    val topLevelDestinations = listOf(Destination.Add, Destination.Charts, Destination.List)
+    val topLevelDestinations = listOf(Destination.Add, Destination.Charts, Destination.List, Destination.Profile)
     Scaffold(
         bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -91,6 +94,7 @@ fun CardioLogApp() {
             }
             composable(Destination.Charts.route) { ChartsScreen() }
             composable(Destination.List.route) { MeasurementListScreen(onEdit = { navController.navigate(Destination.Add.createRoute(it)) }) }
+            composable(Destination.Profile.route) { ProfileScreen() }
         }
     }
 }

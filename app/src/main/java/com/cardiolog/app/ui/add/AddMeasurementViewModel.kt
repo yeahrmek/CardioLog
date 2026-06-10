@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.cardiolog.app.CardioLogApplication
 import com.cardiolog.app.data.BloodPressureRepository
 import com.cardiolog.app.domain.BloodPressureMeasurement
+import com.cardiolog.app.domain.MeasurementPeriod
 import com.cardiolog.app.domain.MeasurementValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,7 @@ data class AddMeasurementUiState(
     val diastolic: String = "",
     val pulse: String = "",
     val measuredAtMillis: Long = System.currentTimeMillis(),
+    val period: MeasurementPeriod = MeasurementPeriod.Morning,
     val note: String = "",
     val createdAtMillis: Long = System.currentTimeMillis(),
     val systolicError: String? = null,
@@ -55,6 +57,7 @@ class AddMeasurementViewModel(
             diastolic = measurement.diastolic.toString(),
             pulse = measurement.pulse?.toString().orEmpty(),
             measuredAtMillis = measurement.measuredAtMillis,
+            period = measurement.period,
             note = measurement.note.orEmpty(),
             createdAtMillis = measurement.createdAtMillis,
             isEditMode = true,
@@ -65,6 +68,7 @@ class AddMeasurementViewModel(
     fun updateDiastolic(value: String) = _uiState.update { it.copy(diastolic = value, diastolicError = null, saveStatus = SaveStatus.Idle) }
     fun updatePulse(value: String) = _uiState.update { it.copy(pulse = value, pulseError = null, saveStatus = SaveStatus.Idle) }
     fun updateMeasuredAt(millis: Long) = _uiState.update { it.copy(measuredAtMillis = millis, saveStatus = SaveStatus.Idle) }
+    fun updatePeriod(period: MeasurementPeriod) = _uiState.update { it.copy(period = period, saveStatus = SaveStatus.Idle) }
     fun updateNote(value: String) = _uiState.update { it.copy(note = value, saveStatus = SaveStatus.Idle) }
 
     fun save() = viewModelScope.launch {
@@ -82,6 +86,7 @@ class AddMeasurementViewModel(
                 diastolic = state.diastolic.toInt(),
                 pulse = state.pulse.takeIf { it.isNotBlank() }?.toInt(),
                 measuredAtMillis = state.measuredAtMillis,
+                period = state.period,
                 note = state.note.trim().ifBlank { null },
                 createdAtMillis = if (state.isEditMode) state.createdAtMillis else now,
                 updatedAtMillis = now,

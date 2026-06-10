@@ -41,7 +41,7 @@ fun MeasurementListScreen(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Measurements", style = MaterialTheme.typography.headlineMedium)
+        Text("Измерения", style = MaterialTheme.typography.headlineMedium)
         if (measurements.isEmpty()) {
             EmptyListState()
         } else {
@@ -62,8 +62,8 @@ fun MeasurementListScreen(
 private fun EmptyListState() {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("No measurements yet", style = MaterialTheme.typography.titleMedium)
-            Text("Add your first blood pressure reading to see it here.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Измерений пока нет", style = MaterialTheme.typography.titleMedium)
+            Text("Добавьте первое измерение давления, и оно появится здесь.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -79,18 +79,19 @@ private fun MeasurementRow(measurement: BloodPressureMeasurement, onEdit: () -> 
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(formatDateTime(measurement.measuredAtMillis), style = MaterialTheme.typography.labelLarge)
                 Text(
-                    "${measurement.systolic}/${measurement.diastolic} mmHg",
+                    "${measurement.systolic}/${measurement.diastolic} мм рт. ст.",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                 )
-                measurement.pulse?.let { Text("Pulse $it bpm", style = MaterialTheme.typography.bodyMedium) }
+                Text(measurement.period.title, style = MaterialTheme.typography.bodyMedium)
+                measurement.pulse?.let { Text("Пульс $it уд/мин", style = MaterialTheme.typography.bodyMedium) }
                 measurement.note?.let {
                     Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = "Edit measurement") }
-            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = "Delete measurement") }
+            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = "Редактировать измерение") }
+            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = "Удалить измерение") }
         }
     }
 }

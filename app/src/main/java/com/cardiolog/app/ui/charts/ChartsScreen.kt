@@ -34,9 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cardiolog.app.domain.BloodPressureMeasurement
 import com.cardiolog.app.domain.ChartRange
+import com.cardiolog.app.domain.MeasurementPeriod
 import com.cardiolog.app.ui.components.formatDay
 import com.cardiolog.app.ui.components.formatMonth
+import com.cardiolog.app.ui.components.formatWeek
 import com.cardiolog.app.ui.components.toLocalDateTime
+import java.time.temporal.ChronoUnit
 
 @Composable
 fun ChartsScreen(viewModel: ChartsViewModel = viewModel(factory = ChartsViewModel.Factory)) {
@@ -47,20 +50,25 @@ fun ChartsScreen(viewModel: ChartsViewModel = viewModel(factory = ChartsViewMode
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Charts", style = MaterialTheme.typography.headlineMedium)
+        Text("Графики", style = MaterialTheme.typography.headlineMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = state.range == ChartRange.Daily, onClick = { viewModel.setRange(ChartRange.Daily) }, label = { Text("Daily") })
-            FilterChip(selected = state.range == ChartRange.Monthly, onClick = { viewModel.setRange(ChartRange.Monthly) }, label = { Text("Monthly") })
+            FilterChip(selected = state.range == ChartRange.Daily, onClick = { viewModel.setRange(ChartRange.Daily) }, label = { Text("День") })
+            FilterChip(selected = state.range == ChartRange.Weekly, onClick = { viewModel.setRange(ChartRange.Weekly) }, label = { Text("Неделя") })
+            FilterChip(selected = state.range == ChartRange.Monthly, onClick = { viewModel.setRange(ChartRange.Monthly) }, label = { Text("Месяц") })
         }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            IconButton(onClick = viewModel::previous) { Icon(Icons.Default.ChevronLeft, contentDescription = "Previous range") }
+            IconButton(onClick = viewModel::previous) { Icon(Icons.Default.ChevronLeft, contentDescription = "Предыдущий период") }
             Text(
-                text = if (state.range == ChartRange.Daily) formatDay(state.day) else formatMonth(state.month),
+                text = when (state.range) {
+                    ChartRange.Daily -> formatDay(state.day)
+                    ChartRange.Weekly -> formatWeek(state.weekStart)
+                    ChartRange.Monthly -> formatMonth(state.month)
+                },
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
-            IconButton(onClick = viewModel::next) { Icon(Icons.Default.ChevronRight, contentDescription = "Next range") }
+            IconButton(onClick = viewModel::next) { Icon(Icons.Default.ChevronRight, contentDescription = "Следующий период") }
         }
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -69,11 +77,11 @@ fun ChartsScreen(viewModel: ChartsViewModel = viewModel(factory = ChartsViewMode
         ) {
             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 if (state.measurements.isEmpty()) {
-                    Text("No readings in this range", style = MaterialTheme.typography.titleMedium)
-                    Text("Saved measurements will appear as calm trend lines here.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Нет измерений за этот период", style = MaterialTheme.typography.titleMedium)
+                    Text("Сохраненные измерения появятся здесь в виде спокойных линий тренда.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     Legend()
-                    BloodPressureChart(state.measurements, state.range, Modifier.fillMaxWidth().height(280.dp))
+                    BloodPressureChart(state.measurements, state.range, state.weekStart, Modifier.fillMaxWidth().height(280.dp))
                 }
             }
         }
@@ -83,16 +91,23 @@ fun ChartsScreen(viewModel: ChartsViewModel = viewModel(factory = ChartsViewMode
 @Composable
 private fun Legend() {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Systolic", color = Color(0xFFC64242), fontWeight = FontWeight.Bold)
-        Text("Diastolic", color = Color(0xFF2F6FDB), fontWeight = FontWeight.Bold)
+        Text("Систолическое", color = Color(0xFFC64242), fontWeight = FontWeight.Bold)
+        Text("Диастолическое", color = Color(0xFF2F6FDB), fontWeight = FontWeight.Bold)
+        Text("Вечер - точка с центром", color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
-private fun BloodPressureChart(measurements: List<BloodPressureMeasurement>, range: ChartRange, modifier: Modifier = Modifier) {
+private fun BloodPressureChart(
+    measurements: List<BloodPressureMeasurement>,
+    range: ChartRange,
+    weekStart: java.time.LocalDate,
+    modifier: Modifier = Modifier,
+) {
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val systolicColor = Color(0xFFC64242)
     val diastolicColor = Color(0xFF2F6FDB)
+    val eveningInnerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     Canvas(modifier = modifier) {
         val left = 48f
         val right = size.width - 12f
@@ -103,6 +118,10 @@ private fun BloodPressureChart(measurements: List<BloodPressureMeasurement>, ran
         fun y(value: Int): Float = bottom - ((value - minValue).toFloat() / (maxValue - minValue).toFloat()) * (bottom - top)
         fun x(measurement: BloodPressureMeasurement, index: Int): Float = when (range) {
             ChartRange.Daily -> if (measurements.size == 1) (left + right) / 2 else left + (right - left) * index / (measurements.lastIndex.toFloat())
+            ChartRange.Weekly -> {
+                val dayOffset = ChronoUnit.DAYS.between(weekStart, measurement.measuredAtMillis.toLocalDateTime().toLocalDate())
+                left + (right - left) * dayOffset.toFloat().coerceIn(0f, 6f) / 6f
+            }
             ChartRange.Monthly -> {
                 val day = measurement.measuredAtMillis.toLocalDateTime().dayOfMonth
                 val maxDay = measurement.measuredAtMillis.toLocalDateTime().toLocalDate().lengthOfMonth()
@@ -116,8 +135,15 @@ private fun BloodPressureChart(measurements: List<BloodPressureMeasurement>, ran
         drawSeries(measurements.mapIndexed { index, it -> Offset(x(it, index), y(it.systolic)) }, systolicColor)
         drawSeries(measurements.mapIndexed { index, it -> Offset(x(it, index), y(it.diastolic)) }, diastolicColor)
         measurements.forEachIndexed { index, measurement ->
-            drawCircle(systolicColor, 5f, Offset(x(measurement, index), y(measurement.systolic)))
-            drawCircle(diastolicColor, 5f, Offset(x(measurement, index), y(measurement.diastolic)))
+            val markerRadius = if (measurement.period == MeasurementPeriod.Evening) 7f else 5f
+            val systolicPoint = Offset(x(measurement, index), y(measurement.systolic))
+            val diastolicPoint = Offset(x(measurement, index), y(measurement.diastolic))
+            drawCircle(systolicColor, markerRadius, systolicPoint)
+            drawCircle(diastolicColor, markerRadius, diastolicPoint)
+            if (measurement.period == MeasurementPeriod.Evening) {
+                drawCircle(eveningInnerColor, 3f, systolicPoint)
+                drawCircle(eveningInnerColor, 3f, diastolicPoint)
+            }
         }
     }
 }

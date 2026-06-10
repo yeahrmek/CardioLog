@@ -15,21 +15,21 @@ object MeasurementValidator {
         val pulseValue = pulse.takeIf { it.isNotBlank() }?.toIntOrNull()
         return MeasurementValidationResult(
             systolicError = when {
-                systolic.isBlank() -> "Enter systolic pressure."
-                systolicValue == null -> "Systolic pressure must be a number."
-                systolicValue !in 50..300 -> "Systolic pressure should be between 50 and 300."
+                systolic.isBlank() -> "Введите систолическое давление."
+                systolicValue == null -> "Систолическое давление должно быть числом."
+                systolicValue !in 50..300 -> "Систолическое давление должно быть от 50 до 300."
                 else -> null
             },
             diastolicError = when {
-                diastolic.isBlank() -> "Enter diastolic pressure."
-                diastolicValue == null -> "Diastolic pressure must be a number."
-                diastolicValue !in 30..200 -> "Diastolic pressure should be between 30 and 200."
+                diastolic.isBlank() -> "Введите диастолическое давление."
+                diastolicValue == null -> "Диастолическое давление должно быть числом."
+                diastolicValue !in 30..200 -> "Диастолическое давление должно быть от 30 до 200."
                 else -> null
             },
             pulseError = when {
                 pulse.isBlank() -> null
-                pulseValue == null -> "Pulse must be a number."
-                pulseValue !in 30..250 -> "Pulse should be between 30 and 250."
+                pulseValue == null -> "Пульс должен быть числом."
+                pulseValue !in 30..250 -> "Пульс должен быть от 30 до 250."
                 else -> null
             },
         )
